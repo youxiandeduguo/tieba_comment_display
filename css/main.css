@@ -1,0 +1,168 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+
+}
+
+:root{
+    --index: calc(1vh + 1vw);
+    --gutter: 30px;
+    --side-small: 26;
+    --side-big: 36;
+    --depth: 5000px;
+	--transition: .75s cubic-bezier(.075, .5, 0, 1)
+}
+
+@font-face {
+    font-family: raleway_c;
+    src: url(../fonts/raleway-v22-cyrillic-300.woff2);
+    font-weight: 300;
+}
+
+@font-face {
+    font-family: raleway_c;
+    src: url(../fonts/raleway-v22-cyrillic-100.woff2);
+    font-weight: 100;
+}
+
+body{
+    background-color: black;
+    color: white;
+    font-size: calc(var(--index)*.8);
+    font-family:  raleway_c, sans-serif;
+    line-height: 1.75;
+    height: var(--depth);
+    font-weight: 300;
+}
+
+.container{
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    perspective: 1500px;
+}
+
+
+.gallery{
+    transform-style: preserve-3d;
+    height: 100%;
+
+}
+
+.frame {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: var(--transition), opacity .75s ease;
+    will-change: transform;
+    transform-style: preserve-3d;
+
+
+    /* font-size: 40px; */
+
+}
+
+h1, h2, h3, h4{
+    font-weight: 100;
+    text-transform: uppercase;
+    width: min-content;
+    line-height: 1;
+}
+
+.frame h2{
+    text-align: center;
+    font-size: calc(var(--index) * 3.3);
+}
+
+.frame-media{
+    position: relative;
+    width: calc(var(--index) * var(--side-small));
+    height: calc(var(--index) * var(--side-big));
+    background-position: center;
+    background-size: cover;
+
+}
+
+.frame-media-left{
+    right: calc(var(--side-small)/10 * var(--index) + var(--gutter));
+    min-width: 110vw;
+
+}
+
+
+.frame-road-left{
+    right: calc(var(--side-small)/10 * var(--index) + var(--gutter));
+    min-width: 110vw;
+
+}
+
+
+.frame-media-right{
+    right: calc(var(--side-small)/3 * var(--index) + var(--gutter));
+    min-width: 110vw;
+
+}
+
+.frame-font-left{
+    right: calc(var(--side-small) / 6 * var(--index) + var(--gutter));
+    min-width: 20vw;
+    z-index: 1;
+}
+
+
+.frame-font-right{
+    left: calc(var(--side-small) / 2 * var(--index) + var(--gutter));
+    min-width: 20vw;
+    z-index: 1;
+}
+
+
+.frame_bg{
+    background-color: rgb(0 0 0 / .87);
+}
+
+
+
+.text-right > * {
+    position: relative;
+    left: 18vw;
+
+}
+
+.text-left > * {
+    position: relative;
+    right: 18vw;
+
+}
+
+.frame h3 {
+    font-size: calc(var(--index) * 3);
+
+}
+
+.frame p {
+    max-width: 30vw;
+    margin-top: 3vh;
+}
+
+
+
+
+.soundbutton{
+    z-index: 5;
+    position: fixed;
+    bottom: 5vh;
+	right: 5vw;
+    cursor: pointer;
+    width: 24px;
+    transition: .25s ease;
+
+}
+
+.soundbutton.paused{
+    opacity: .25;
+}

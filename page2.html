@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>层层深入的词云动画 - 全屏分布</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #word-cloud-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      perspective: 1000px; /* 3D视图效果 */
+      overflow: hidden;  /* 防止溢出 */
+    }
+
+    .circle {
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: moveForward 10s linear forwards; /* 动画不循环，统一速度 */
+      will-change: transform, opacity; /* 提高性能 */
+    }
+
+    .word {
+      position: absolute;
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.8);
+      pointer-events: none;
+      white-space: nowrap;
+      font-size: 20px;
+      opacity: 1;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    @keyframes moveForward {
+      0% {
+        transform: translate3d(var(--start-x), var(--start-y), 0) scale(1) ; /* 初始状态 */
+        opacity: 1;
+      }
+      50% {
+        transform: translate3d(25vw, 25vh, 0) scale(0.5); /* 向内缩小并平移 */
+        opacity: 0.5;
+      }
+      100% {
+        transform: translate3d(50vw, 50vh, 0) scale(0); /* 完全缩小并消失 */
+        opacity: 0;  /* 最终完全消失 */
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div id="word-cloud-container"></div>
+
+  <script>
+    window.onload = async function () {
+      const container = document.getElementById('word-cloud-container');
+      const totalWordsPerCircle = 15; // 每组显示的词语数量
+      const numCircles = 5; // 初始生成的组数量
+
+      let words = [];
+
+      // 从文件中读取数据
+      async function loadWordsFromFile() {
+        try {
+          const response = await fetch("count.txt");
+          const text = await response.text();
+          words = parseWordsWithFrequency(text);
+        } catch (error) {
+          console.error("读取文件失败:", error);
+        }
+      }
+
+      // 解析文件中的数据 (名称和频次)
+      function parseWordsWithFrequency(data) {
+        const wordArray = [];
+        const lines = data.trim().split("\n");
+        lines.forEach(line => {
+          const [word, frequency] = line.split(/\s+/); // 假设列用空格或制表符分隔
+          const freq = parseInt(frequency, 10);
+          for (let i = 0; i < freq; i++) {
+            wordArray.push(word); // 按频次将词语添加多次
+          }
+        });
+        return wordArray;
+      }
+
+      // 随机生成颜色
+      function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+
+      // 动态创建一组词语
+      function createNewCircle() {
+        if (words.length === 0) return;
+
+        const circleElement = document.createElement('div');
+        circleElement.classList.add('circle');
+
+        // 为每个词语计算随机全屏位置，并添加到容器中
+        for (let i = 0; i < totalWordsPerCircle; i++) {
+          const word = words[Math.floor(Math.random() * words.length)]; // 随机选取词语
+          const wordElement = document.createElement('div');
+          wordElement.classList.add('word');
+          wordElement.textContent = word;
+
+          // 随机分布在整个页面
+          const x = Math.random() * window.innerWidth; // 随机x坐标
+          const y = Math.random() * window.innerHeight; // 随机y坐标
+
+          wordElement.style.transform = `translate3d(${x}px, ${y}px, 0)`; // 设置全屏位置
+          wordElement.style.fontSize = `${Math.random() * 30 + 15}px`; // 随机字体大小
+          wordElement.style.color = getRandomColor(); // 随机颜色
+
+          circleElement.appendChild(wordElement);
+        }
+
+        container.appendChild(circleElement); // 将组容器添加到最外层容器
+      }
+
+      // 初始化动画
+      async function initialize() {
+        await loadWordsFromFile(); // 从文件加载词语
+
+        // 每隔一段时间动态添加一组词语
+        setInterval(() => {
+          createNewCircle();
+        }, 1000);
+
+        // 初始创建一些组
+        for (let i = 0; i < numCircles; i++) {
+          createNewCircle();
+        }
+      }
+
+      // 启动程序
+      initialize();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>动态排行榜</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .ranking-header {
+            width: 100%;
+            background-color: #3944bc;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .ranking-list {
+            width: 100%;
+            max-width: 600px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .ranking-item {
+            display: flex;
+            flex-direction: column;
+            padding: 15px 20px;
+            border-bottom: 1px solid #444;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .ranking-item:hover {
+            background-color: #2a2f3d;
+            transform: scale(1.01);
+        }
+
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+
+        .ranking-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ranking-position {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #67d3fc;
+        }
+
+        .ranking-name {
+            flex: 1;
+            margin-left: 10px;
+            font-weight: 500;
+        }
+
+        .ranking-score {
+            font-size: 1em;
+            color: #c2c2c2;
+            margin-left: 10px;
+        }
+
+        .progress-bar-container {
+            margin-top: 10px;
+            background-color: #2a2f3d;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            width: 0;
+        }
+    </style>
+</head>
+<body>
+    <ul class="ranking-list" id="rankingList"></ul>
+
+    <script>
+        // 直接加载CSV文件内容（假设文件位于同目录下）
+        fetch('count.csv') // 将 'data.csv' 替换为实际的文件路径
+            .then(response => response.text())
+            .then(text => {
+                const rows = text.split('\n');
+                const data = rows.map(row => row.split(',')).filter(row => row.length === 2);
+
+                // 获取最大分数
+                const maxScore = Math.max(...data.map(item => parseInt(item[1].trim(), 10)));
+
+                // 清空排行榜
+                const rankingList = document.getElementById('rankingList');
+                rankingList.innerHTML = '';
+
+                // 添加排行榜内容
+                data.forEach((item, index) => {
+                    const name = item[0].trim();
+                    const score = parseInt(item[1].trim(), 10);
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('ranking-item');
+
+                    // 计算进度条宽度：分数 / 最大分数 * 100
+                    const progressWidth = (score / maxScore) * 100;
+
+                    listItem.innerHTML = `
+                        <div class="ranking-content">
+                            <span class="ranking-position">${index + 1}</span>
+                            <span class="ranking-name">${name}</span>
+                            <span class="ranking-score">${score}次</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${progressWidth}%;"></div>
+                        </div>
+                    `;
+                    rankingList.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error('加载CSV文件失败:', error);
+            });
+    </script>
+</body>
+</html>

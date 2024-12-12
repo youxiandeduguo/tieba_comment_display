@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>隧道飞入动画</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000; /* 黑色背景 */
+      display: flex;
+      justify-content: center; /* 水平居中 */
+      align-items: center;   /* 垂直居中 */
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #word-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      perspective: 1500px; /* 添加3D视角 */
+    }
+
+    .word {
+      position: absolute;
+      font-weight: bold;
+      font-size: 20px;
+      white-space: nowrap;
+      transform-origin: center center;
+      animation: flyAway 2s linear forwards;
+    }
+
+    @keyframes flyAway {
+      0% {
+        opacity: 1;
+        transform: translate3d(var(--start-x), var(--start-y), 0px) scale(0.3); /* 初始位置 */
+      }
+      70% {
+        opacity: 1;
+        transform: translate3d(var(--start-x), var(--start-y), 500px) scale(0.6); /* 中间阶段 */
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--start-x), var(--start-y), 1000px) scale(1); /* 远离 */
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="word-container"></div>
+
+  <script>
+    const container = document.getElementById('word-container');
+    const radius = 150; // 圆周半径
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    let words = []; // 存储从文件中读取的数据
+
+    // 随机生成颜色
+    function getRandomColor() {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // 加载文件数据
+    async function loadWords() {
+      try {
+        const response = await fetch('count.txt');
+        const text = await response.text();
+        const lines = text.trim().split('\n');
+        lines.forEach(line => {
+          const [word, frequency] = line.split(/\s+/); // 按空格或制表符分割
+          for (let i = 0; i < parseInt(frequency, 10); i++) {
+            words.push(word);
+          }
+        });
+      } catch (error) {
+        console.error('加载文件失败:', error);
+      }
+    }
+
+    // 生成随机位置并飞离的单词
+    function createWord() {
+      if (words.length === 0) return; // 如果没有数据则不生成单词
+
+      const wordElement = document.createElement('div');
+      wordElement.classList.add('word');
+      wordElement.textContent = words[Math.floor(Math.random() * words.length)];
+
+      // 设置随机颜色
+      wordElement.style.color = getRandomColor();
+
+      // 随机角度分布在圆周上
+      const theta = Math.random() * Math.PI * 2; // 随机角度
+      const startX = centerX + radius * Math.cos(theta) + 'px'; // x = r * cos(θ)
+      const startY = centerY + radius * Math.sin(theta) + 'px'; // y = r * sin(θ)
+
+      // 使用 CSS 变量传递位置
+      wordElement.style.setProperty('--start-x', startX);
+      wordElement.style.setProperty('--start-y', startY);
+
+      // 动画结束后移除单词
+      container.appendChild(wordElement);
+      wordElement.addEventListener('animationend', () => {
+        container.removeChild(wordElement);
+      });
+    }
+
+    // 循环生成单词
+    async function startAnimation() {
+      await loadWords(); // 等待数据加载完成
+      setInterval(() => {
+        createWord();
+      }, 30); // 每30ms生成一个单词
+    }
+
+    // 开始动画
+    startAnimation();
+  </script>
+</body>
+</html>

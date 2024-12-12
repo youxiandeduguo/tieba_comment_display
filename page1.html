@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: transparent;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #container {
+            position: relative;
+            width: 200vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .barrage {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 16px;
+            font-weight: bold;
+            animation-timing-function: linear;
+            animation-iteration-count: 1;
+            animation-fill-mode: forwards;
+            cursor: pointer;
+        }
+        @keyframes move {
+            from {
+                transform: translateX(-100%);
+            }
+            to {
+                transform: translateX(200vw);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script>
+        const container = document.getElementById("container");
+        let commentsData = [];
+
+        // 从 .csv 文件加载前 20 行数据
+        const loadDataFromFile = async () => {
+            try {
+                const response = await fetch("tieba.csv"); // 替换为你的 CSV 文件路径
+                const text = await response.text();
+                commentsData = parseCSV(text);
+                startBarrage();
+            } catch (error) {
+                console.error("加载数据失败:", error);
+            }
+        };
+
+        // 解析 CSV 文件，仅加载前 20 行（跳过表头）
+        const parseCSV = (data) => {
+            const lines = data.trim().split("\n");
+            const rows = lines.map(line => line.split(","));
+
+            // 仅提取前 20 行（不包括表头），解析所有列数据
+            return rows.slice(1,).map(row => ({
+                text: row[1], // 第二列为评论内容
+                name: row[0], // 第一列为用户名
+                time: row[2], // 第三列为时间
+                position: row[3] || "无位置" // 第四列为位置，若无则设置默认值
+            }));
+        };
+
+        // 开始生成弹幕
+        const startBarrage = () => {
+            setInterval(() => {
+                generateBarrage();
+            }, 1000);
+        };
+
+        // 控制每次生成的弹幕数量
+        const generateBarrage = () => {
+            const maxBarrageCount = 10; // 每次最多生成5条弹幕
+            const randomIndices = getRandomIndices(commentsData.length, maxBarrageCount);
+
+            randomIndices.forEach(index => {
+                createBarrage(commentsData[index]);
+            });
+        };
+
+        // 生成随机索引数组
+        const getRandomIndices = (arrayLength, count) => {
+            const indices = [];
+            while (indices.length < count && indices.length < arrayLength) {
+                const randomIndex = Math.floor(Math.random() * arrayLength);
+                if (!indices.includes(randomIndex)) {
+                    indices.push(randomIndex);
+                }
+            }
+            return indices;
+        };
+
+        // 创建单个弹幕
+        const createBarrage = (item) => {
+            const barrage = document.createElement("div");
+            barrage.className = "barrage";
+            barrage.textContent = item.text;
+
+            // 随机设置字体大小、颜色和初始位置
+            barrage.style.fontSize = `${Math.random() * 10 + 16}px`;
+            barrage.style.color = getRandomColor();
+            barrage.style.top = `${Math.random() * 90}%`;
+            barrage.style.animationDuration = `${Math.random() * 5 + 10}s`;
+
+            // 动画从右向左滚动
+            barrage.style.animationName = "move";
+
+            // 绑定点击事件，显示完整描述
+            barrage.addEventListener("click", () => {
+                alert(`评论: ${item.text}\n用户: ${item.name}\n时间: ${item.time}\n位置: ${item.position}`);
+            });
+
+            // 添加到容器
+            container.appendChild(barrage);
+
+            // 动画结束时移除弹幕
+            barrage.addEventListener("animationend", () => {
+                barrage.remove();
+            });
+        };
+
+        // 随机生成颜色
+        const getRandomColor = () => {
+            const letters = "0123456789ABCDEF";
+            let color = "#";
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        };
+
+        // 开始加载数据
+        loadDataFromFile();
+    </script>
+</body>
+</html>
