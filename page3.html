@@ -14,6 +14,7 @@
       align-items: center;   /* 垂直居中 */
       height: 100vh;
       overflow: hidden;
+      font-family: Arial, sans-serif;
     }
 
     #word-container {
@@ -30,8 +31,10 @@
       white-space: nowrap;
       transform-origin: center center;
       animation: flyAway 2s linear forwards;
+      cursor: pointer; /* 鼠标悬停时显示为可点击 */
     }
 
+    /* 词语飞离的动画 */
     @keyframes flyAway {
       0% {
         opacity: 1;
@@ -46,17 +49,57 @@
         transform: translate3d(var(--start-x), var(--start-y), 1000px) scale(1); /* 远离 */
       }
     }
+
+    /* 修改后的浮动框样式 */
+    #floatingWindow {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      max-width: 500px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+      z-index: 1000;
+      text-align: center; /* 使内容水平居中 */
+    }
+
+    #floatingWindow button {
+      background-color: #f00;
+      border: none;
+      padding: 10px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+
+    #info-text {
+      white-space: pre-wrap; /* 保持换行符 */
+      word-wrap: break-word; /* 自动换行长单词 */
+    }
   </style>
 </head>
 <body>
   <div id="word-container"></div>
+  <div id="floatingWindow">
+    <div id="info-text"></div>
+    <button onclick="closePopup()">关闭</button>
+  </div>
 
   <script>
     const container = document.getElementById('word-container');
+    const popup = document.getElementById('floatingWindow');
+    const infoText = document.getElementById('info-text');
     const radius = 150; // 圆周半径
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     let words = []; // 存储从文件中读取的数据
+    let wordFrequencies = {}; // 存储词语频率
 
     // 随机生成颜色
     function getRandomColor() {
@@ -74,8 +117,9 @@
         const lines = text.trim().split('\n');
         lines.forEach(line => {
           const [word, frequency] = line.split(/\s+/); // 按空格或制表符分割
-          for (let i = 0; i < parseInt(frequency, 10); i++) {
-            words.push(word);
+          wordFrequencies[word] = parseInt(frequency, 10); // 保存频率
+          for (let i = 0; i < wordFrequencies[word]; i++) {
+            words.push(word); // 根据频率存储词语
           }
         });
       } catch (error) {
@@ -83,7 +127,7 @@
       }
     }
 
-    // 生成随机位置并飞离的单词
+    // 创建随机位置并飞离的单词
     function createWord() {
       if (words.length === 0) return; // 如果没有数据则不生成单词
 
@@ -103,11 +147,30 @@
       wordElement.style.setProperty('--start-x', startX);
       wordElement.style.setProperty('--start-y', startY);
 
+      // 添加点击事件，显示词语的详细信息
+      wordElement.addEventListener('click', (event) => showWordInfo(event, wordElement.textContent));
+
       // 动画结束后移除单词
       container.appendChild(wordElement);
       wordElement.addEventListener('animationend', () => {
         container.removeChild(wordElement);
       });
+    }
+
+    // 显示词语的详细信息，包括词频
+    function showWordInfo(event, word) {
+      const frequency = wordFrequencies[word] || 0; // 获取该词的频率
+
+      // 使用 <br> 标签进行换行
+      infoText.innerHTML = `词语: ${word}<br>频率: ${frequency}`;
+
+      // 显示浮动框
+      popup.style.display = 'block';
+    }
+
+    // 关闭弹出框
+    function closePopup() {
+      popup.style.display = 'none';
     }
 
     // 循环生成单词

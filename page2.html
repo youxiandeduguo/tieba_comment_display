@@ -38,16 +38,17 @@
       position: absolute;
       font-weight: bold;
       color: rgba(255, 255, 255, 0.8);
-      pointer-events: none;
+      cursor: pointer; /* 使词语可点击 */
       white-space: nowrap;
       font-size: 20px;
       opacity: 1;
       transition: opacity 0.3s ease-in-out;
+      animation-play-state: running; /* 默认动画运行 */
     }
 
     @keyframes moveForward {
       0% {
-        transform: translate3d(var(--start-x), var(--start-y), 0) scale(1) ; /* 初始状态 */
+        transform: translate3d(var(--start-x), var(--start-y), 0) scale(1); /* 初始状态 */
         opacity: 1;
       }
       50% {
@@ -60,14 +61,54 @@
       }
     }
 
+    /* 浮动窗样式 */
+    #floatingWindow {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      max-width: 500px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+      z-index: 1000;
+      text-align: center; /* 使内容水平居中 */
+    }
+    #floatingWindow h2 {
+      margin-top: 0;
+    }
+    #floatingWindow button {
+      margin-top: 20px;
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    #floatingWindow button:hover {
+      background-color: darkred;
+    }
   </style>
 </head>
 <body>
   <div id="word-cloud-container"></div>
 
+  <!-- 浮动窗，用于显示词语详细信息 -->
+  <div id="floatingWindow">
+    <h2>关键词详细信息</h2>
+    <p id="wordDetails"></p>
+    <button id="closeButton">关闭</button>
+  </div>
+
   <script>
     window.onload = async function () {
       const container = document.getElementById('word-cloud-container');
+      const floatingWindow = document.getElementById('floatingWindow');
+      const wordDetails = document.getElementById('wordDetails');
+      const closeButton = document.getElementById('closeButton');
       const totalWordsPerCircle = 15; // 每组显示的词语数量
       const numCircles = 5; // 初始生成的组数量
 
@@ -91,9 +132,7 @@
         lines.forEach(line => {
           const [word, frequency] = line.split(/\s+/); // 假设列用空格或制表符分隔
           const freq = parseInt(frequency, 10);
-          for (let i = 0; i < freq; i++) {
-            wordArray.push(word); // 按频次将词语添加多次
-          }
+          wordArray.push({ word, frequency: freq }); // 将词语和频次保存为对象
         });
         return wordArray;
       }
@@ -117,24 +156,50 @@
 
         // 为每个词语计算随机全屏位置，并添加到容器中
         for (let i = 0; i < totalWordsPerCircle; i++) {
-          const word = words[Math.floor(Math.random() * words.length)]; // 随机选取词语
+          const wordObj = words[Math.floor(Math.random() * words.length)]; // 随机选取词语
           const wordElement = document.createElement('div');
           wordElement.classList.add('word');
-          wordElement.textContent = word;
+          wordElement.textContent = wordObj.word;
 
-          // 随机分布在整个页面
-          const x = Math.random() * window.innerWidth; // 随机x坐标
-          const y = Math.random() * window.innerHeight; // 随机y坐标
+          // 随机分布在整个页面外部
+          const x = (Math.random() - 0.5) * 3 * window.innerWidth; // 随机x坐标，范围在屏幕外
+          const y = (Math.random() - 0.5) * 2 * window.innerHeight; // 随机y坐标，范围在屏幕外
 
-          wordElement.style.transform = `translate3d(${x}px, ${y}px, 0)`; // 设置全屏位置
+          wordElement.style.transform = `translate3d(${x}px, ${y}px, 0)`; // 设置外部位置
           wordElement.style.fontSize = `${Math.random() * 30 + 15}px`; // 随机字体大小
           wordElement.style.color = getRandomColor(); // 随机颜色
+
+          // 鼠标悬停时停止动画
+          wordElement.addEventListener('mouseenter', () => {
+            wordElement.style.animationPlayState = 'paused'; // 停止动画
+          });
+
+          // 鼠标离开时恢复动画
+          wordElement.addEventListener('mouseleave', () => {
+            wordElement.style.animationPlayState = 'running'; // 恢复动画
+          });
+
+          // 点击显示详细信息
+          wordElement.addEventListener('click', () => {
+            openFloatingWindow(wordObj);
+          });
 
           circleElement.appendChild(wordElement);
         }
 
         container.appendChild(circleElement); // 将组容器添加到最外层容器
       }
+
+      // 打开浮动窗并显示详细信息
+      function openFloatingWindow(wordObj) {
+        wordDetails.textContent = `词语: ${wordObj.word}\n频次: ${wordObj.frequency}`;
+        floatingWindow.style.display = "block";
+      }
+
+      // 关闭浮动窗
+      closeButton.addEventListener("click", () => {
+        floatingWindow.style.display = "none";
+      });
 
       // 初始化动画
       async function initialize() {
@@ -143,7 +208,7 @@
         // 每隔一段时间动态添加一组词语
         setInterval(() => {
           createNewCircle();
-        }, 1000);
+        }, 200);
 
         // 初始创建一些组
         for (let i = 0; i < numCircles; i++) {

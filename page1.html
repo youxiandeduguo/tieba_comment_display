@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,12 +35,69 @@
                 transform: translateX(200vw);
             }
         }
+
+        /* 添加暂停动画的类 */
+        .paused {
+            animation-play-state: paused !important;
+        }
+
+        /* 浮动窗样式 */
+        #floatingWindow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 500px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            z-index: 99999;  /* 增加z-index，确保浮动窗显示在最前面 */
+            text-align: center;
+        }
+        #floatingWindow h2 {
+            margin-top: 0;
+        }
+        #floatingWindow button {
+            margin-top: 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        #floatingWindow button:hover {
+            background-color: darkred;
+        }
+
+        /* 使浮动窗内的内容垂直居中 */
+        #floatingWindow p {
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div id="container"></div>
+    <div id="floatingWindow">
+        <h2>评论详细信息</h2>
+        <p id="commentText"></p>
+        <p id="commentUser"></p>
+        <p id="commentTime"></p>
+        <p id="commentPosition"></p>
+        <button id="closeButton">关闭</button>
+    </div>
+
     <script>
         const container = document.getElementById("container");
+        const floatingWindow = document.getElementById("floatingWindow");
+        const commentText = document.getElementById("commentText");
+        const commentUser = document.getElementById("commentUser");
+        const commentTime = document.getElementById("commentTime");
+        const commentPosition = document.getElementById("commentPosition");
+        const closeButton = document.getElementById("closeButton");
+
         let commentsData = [];
 
         // 从 .csv 文件加载前 20 行数据
@@ -113,9 +170,19 @@
             // 动画从右向左滚动
             barrage.style.animationName = "move";
 
-            // 绑定点击事件，显示完整描述
+            // 绑定点击事件，显示浮动窗
             barrage.addEventListener("click", () => {
-                alert(`评论: ${item.text}\n用户: ${item.name}\n时间: ${item.time}\n位置: ${item.position}`);
+                openFloatingWindow(item);
+            });
+
+            // 当鼠标进入弹幕时暂停动画
+            barrage.addEventListener("mouseenter", () => {
+                barrage.classList.add("paused");
+            });
+
+            // 当鼠标离开弹幕时恢复动画
+            barrage.addEventListener("mouseleave", () => {
+                barrage.classList.remove("paused");
             });
 
             // 添加到容器
@@ -136,6 +203,20 @@
             }
             return color;
         };
+
+        // 打开浮动窗
+        const openFloatingWindow = (item) => {
+            commentText.textContent = `评论: ${item.text}`;
+            commentUser.textContent = `用户: ${item.name}`;
+            commentTime.textContent = `时间: ${item.time}`;
+            commentPosition.textContent = `位置: ${item.position}`;
+            floatingWindow.style.display = "block";
+        };
+
+        // 关闭浮动窗
+        closeButton.addEventListener("click", () => {
+            floatingWindow.style.display = "none";
+        });
 
         // 开始加载数据
         loadDataFromFile();
